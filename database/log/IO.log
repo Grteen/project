@@ -1,0 +1,3 @@
+create_db : db exists name : tdb
+use_db : use db success name : tdb
+create_tb : table exists name : ttb
