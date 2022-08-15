@@ -8,12 +8,9 @@
 #define BUFLEN  4096    // the maxbuflength of buffer
 #define IOLOG   "./log/IO.log"
 
-// flag of create database
 #define IF_NOT_EXIST    1   
 
-// flag of delete database
 #define IF_EXIST    1
-
 
 /* 
     databases DDL
@@ -40,10 +37,39 @@ int use_db(std::string db_name);
 
 #define TBMAX   1024
 // show all tables in this databases
-std::string * show_tables(std::string database , int * size);
+std::string * show_tables(int * size);
 
 // create table    return -1 means error 1 means tb exists 0 means success
 int create_tb(std::string tb_name , table_structure tb_struct);
 
+// check whether the target table exists  return -1 means error 0 means success 1 means not exists
+int check_tb_exist(std::string tb_name);
+
 // show the types in target table
 table * desc_tb(std::string tb_name);
+
+// read all information about a table
+table * read_tables(std::string tb_name);
+
+// write all table's information to files
+int write_tables(table * tb);
+
+// add new field   -1 means error 0 means success 1 means same typename
+int add_field(std::string tb_name , std::string newfield , std::string type , std::string comment ,
+              std::string attr);
+
+// modify field    -1 means error 0 means success 1 means not find target
+int modify_field(std::string tb_name , std::string oldfield , std::string type);
+
+// change field    -1 means error 0 means success 1 means not find target
+int change_field(std::string tb_name , std::string oldfield , std::string newfield , std::string type ,
+                 std::string comment , std::string attr);
+
+// drop field      -1 means error 0 means success 1 means not find target
+int drop_field(std::string tb_name , std::string oldfield);
+
+// rename table    -1 means error 0 means success 1 means not find target
+int rename_table(std::string old_tb_name , std::string new_tb_name);
+
+// drop table
+int drop_table(std::string tb_name , int DTB_flags);

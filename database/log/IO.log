@@ -1,3 +1,4 @@
 create_db : db exists name : tdb
 use_db : use db success name : tdb
-create_tb : table exists name : ttb
+create_tb : table exists name : 6
+rename_table : rename error , oldname : 6 , newname : new666delete_db success name : new666

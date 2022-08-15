@@ -12,6 +12,7 @@ class INT {
 public:
     int val;
     RANGE INT_RANGE;
+    int INT_CHECK();
     INT();
     ~INT();
 };
@@ -20,6 +21,7 @@ class DOUBLE {
 public:
     double val;
     RANGE DOUBLE_RANGE;
+    int DOUBLE_CHECK();
     DOUBLE();
     ~DOUBLE();
 };
@@ -28,6 +30,7 @@ class FLOAT {
 public:
     float val;
     RANGE FLOAT_RANGE;
+    int FLOAT_CHECK();
     FLOAT();
     ~FLOAT();
 };
@@ -37,6 +40,7 @@ class CHAR {
 public:
     std::string val;
     RANGE CHAR_RANGE;
+    int CHAR_CHECK();
     CHAR();
     ~CHAR();
     CHAR(unsigned int size);
@@ -46,6 +50,7 @@ class VARCHAR {
 public:
     std::string val;
     RANGE VARCHAR_RANGE;
+    int VARCHAR_CHECK();
     VARCHAR();
     ~VARCHAR();
     VARCHAR(unsigned int size);
@@ -56,6 +61,7 @@ class YEAR {
 public:
     int val;
     RANGE YEAR_RANGE;
+    int YEAR_CHECK();
     YEAR();
     ~YEAR();
 };
@@ -68,6 +74,7 @@ public:
     RANGE TIME_MINUTE_RANGE;
     int second;
     RANGE TIME_SECOND_RANGE;
+    int TIME_CHECK();
     TIME();
     ~TIME();
 };
@@ -80,6 +87,5 @@ public:
     int day;
     DATE();
     ~DATE();
+    int DATE_CHECK();      // check DATE's  validity
 };
-
-int DATE_checkfunction(DATE date);      // check DATE's  validity
