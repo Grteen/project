@@ -5,5 +5,5 @@ main: ${OBJS} database_client.o
 clean:
 	rm -f main ${OBJS}
 	rm -f client database_client.o
-test: DDL.o common.o db_type.o db_table.o 
-	g++ -o a.out DDL.o common.o db_type.o db_table.o
+test: BPT.o common.o
+	g++ -o a.out BPT.o common.o
