@@ -34,9 +34,8 @@ record * read_record(string tb_name , off_t off , int * index , int indexnum) {
     setvbuf(fp , NULL , _IOLBF , 0);
     fseek(fp , off , SEEK_SET);
     fgets(buf , BUFLEN , fp);
-
     // read the record and deal with to the correct format
-    for (int i = 0 ; i < strlen(buf) ; i++) {
+    for (int i = 2 ; i < strlen(buf) ; i++) {
         if (buf[i] == ':') {
             tempi++;
             continue;
@@ -47,7 +46,7 @@ record * read_record(string tb_name , off_t off , int * index , int indexnum) {
     }
 
     for (int i = 0 ; i < indexnum ; i++) {
-        res->fields[res->fieldsnum++] = temp[index[i]];
+        res->value[res->fieldsnum++] = temp[index[i]];
     }
 
     fclose(fp);
@@ -110,15 +109,14 @@ table * select_record(string * fields , string * alias , int fieldsnum , string 
         In_Node * temp;
         record * rec;
         if (DQL_FLAG == DQL_EQUAL) {        // if condition is equal
-            temp = it->second->search_Sim(it->second->root , stoll(min));     // find the record
+            temp = it->second->search_Node(it->second->root , stoll(min));     // find the record
             // read the target record
             rec = read_record(tb_name , temp->off , index , indexnum);  
             put_rec(res , rec);
-            delete rec;
         }
         else if (DQL_FLAG == DQL_RANGE) {   // if condition is range
-            temp = it->second->search_Node(it->second->root , stoll(min));     // find the record
-            rec = read_record(tb_name , temp->off , index , indexnum);   // the min
+            // find the biggest number smaller than min
+            temp = it->second->search_Sim(it->second->root , stoll(min));
             int nodei = 0;
             // find this record's index location
             for (int i = 0 ; i < temp->master->keynum ; i++) {    
@@ -127,23 +125,21 @@ table * select_record(string * fields , string * alias , int fieldsnum , string 
                 }
             }
             Node * Ntemp = temp->master;
-
             // goto BPtree's right to find others which satify the condition
+            nodei++;        // the first number that bigger or equal than min
             while (Ntemp != NULL) {
-                for (int i = nodei ; i < Ntemp->keynum ; i++) {         
-                    if (Ntemp->key[i]->val <= stoll(max)) {
+                for (int i = nodei; i < Ntemp->keynum ; i++) {   
+                    if (Ntemp->key[i]->val <= stoll(max) && Ntemp->key[i]->val >= stoll(min)) {
                         rec = read_record(tb_name , Ntemp->key[i]->off , index , indexnum);
                         put_rec(res , rec);
                     }
                     else {
                         goto finish;
                     }
-
-                    if (i == Ntemp->keynum - 1) {
-                        Ntemp = Ntemp->Next_Node;
-                        nodei = 0;
-                    }
                 }
+
+                Ntemp = Ntemp->Next_Node;
+                nodei = 0;
             }
 
             finish:
@@ -179,46 +175,4 @@ table * select_record(string * fields , string * alias , int fieldsnum , string 
 
     delete rec;
     return res;     // success
-}
-
-int main(void) {
-    io_logfp = fopen("./log/IO.log" , "w+");
-    use_db("tdb");
-    record rcd;
-    rcd.fieldsnum = 2;
-    rcd.fields[0] = "1name";
-    rcd.fields[1] = "3name";
-    rcd.value[0] = "30";
-    rcd.value[1] = "250";
-
-    record rcd2;
-    rcd2.fieldsnum = 2;
-    rcd2.fields[0] = "1name";
-    rcd2.fields[1] = "3name";
-    rcd2.value[0] = "25";
-    rcd2.value[1] = "200";
-
-    record rcd3;
-    rcd3.fieldsnum = 2;
-    rcd3.fields[0] = "1name";
-    rcd3.fields[1] = "3name";
-    rcd3.value[0] = "40";
-    rcd3.value[1] = "500";
-
-    table * tb = read_tables("6");
-    create_index(tb , "1name");
-    create_bpt("6" , "1name");
-    insert_record("6" , rcd);
-    insert_record("6" , rcd2);
-    insert_record("6" , rcd3);
-
-    string fields[100];
-    fields[0] = "1name";
-    string ailas[100];
-    ailas[0] = "ailas";
-    string max = "40";
-    string min = "30";
-
-    tb = select_record(fields , ailas , 1 , "6" , DQL_EQUAL , "1name" , max , min);
-    cout << tb->prorecord[0][0] << endl;
 }

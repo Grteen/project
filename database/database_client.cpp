@@ -6,6 +6,7 @@ int main(int argc ,char * argv[]) {
     struct addrinfo *ailist , *aip;
     struct addrinfo hint;
     int sockfd , err;
+    char buf[BUFLEN];
 
     if (argc != 2)
         err_quit("usage : client hostname");
@@ -21,7 +22,10 @@ int main(int argc ,char * argv[]) {
             err = errno;
         }
         else {
-            send(sockfd , "slect * from tb_user" , 10 , 0);
+            // get the sql from terminate
+            while (read(STDOUT_FILENO , buf , BUFLEN) != -1) {
+                send(sockfd , buf , strlen(buf), 0);
+            }
             exit(0);
         }
     }

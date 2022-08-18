@@ -178,6 +178,7 @@ void Node::Node_split() {
             left->ptree = this->ptree;
             left->childrens[left->keynum] = this->childrens[left->keynum];
             left->childrens[left->keynum]->parent = left;
+            left->parent = this->parent;
             for (int i = 0 ; i < right->keynum ; i++) {
                 right->key[i] = this->key[i + left->keynum + 1];
                 right->key[i]->master = right;
@@ -187,6 +188,7 @@ void Node::Node_split() {
             right->ptree = this->ptree;
             right->childrens[right->keynum] = this->childrens[right->keynum + left->keynum + 1];
             right->childrens[right->keynum]->parent = right;
+            right->parent = this->parent;
         }
         else {          // is the leaf node
             left->keynum = BPTORDER / 2;

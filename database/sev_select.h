@@ -7,9 +7,10 @@ using namespace std;
 #define HOST_NAME_MAX   256
 #endif
 
-#define BUFLEN 128
 #define QLEN 10
 
 #define SEVLOG  "./log/db_server.log"
+#define BPTLOG  "./log/bpt.log"
+#define IOLOG   "./log/IO.log"
 
 void sev_select(int );

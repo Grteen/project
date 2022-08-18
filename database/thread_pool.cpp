@@ -13,7 +13,9 @@ void Prosql(threadinfo * thrinfo) {
         cond.wait(locker , [=](){return thrinfo->get_allow();});        // wait tasks
         locker.unlock();
         thrinfo->change_free(false);        // busy 
-        std::cout << thrinfo->get_sql() << std::endl;       // process function ...
+        // process function ...
+        std::cout << thrinfo->get_sql() << std::endl; 
+        // process function ...
         thrinfo->change_allow(false);           // process done , so next time will be not allowed and waiting to be changed
     }
 }

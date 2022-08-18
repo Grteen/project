@@ -6,6 +6,7 @@
 extern cliarray cli_array;
 extern FILE * logfp;
 extern FILE * io_logfp;
+extern FILE * bptlog;
 extern condition_variable cond;
 extern char * CUR_DIR;
 thread_pool tp;   
@@ -49,6 +50,7 @@ void sev_select(int listenfd) {
     memset(&buf , 0 , sizeof(buf));
     logfp = fopen(SEVLOG , "w+");         // open the log
     io_logfp = fopen(IOLOG , "w+");        // open the IO log
+    bptlog = fopen(BPTLOG , "w+");          // open the bpt log
     CUR_DIR = new char[PATH_MAX];
     if (getcwd(CUR_DIR , PATH_MAX) == NULL){         // get the current dir
         fprintf(logfp , "getcwd error");

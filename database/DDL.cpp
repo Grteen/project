@@ -1,6 +1,6 @@
 #include "DDL.h"
 
-FILE * io_logfp;
+extern FILE * io_logfp;
 std::string CUR_DB;         // current database
 char * CUR_DIR;         // current dir
 extern std::unordered_map<string , BPtree *> idxmp;            // index map records the field's index
@@ -316,7 +316,7 @@ table * desc_tb(std::string tb_name) {
     }
     setvbuf(fp , NULL , _IOLBF , 0);
     int i = 0;
-    while (fgets(buf , 4096 , fp) != NULL) {
+    while (fgets(buf , BUFLEN , fp) != NULL) {
         buf[strlen(buf) - 1] = 0;
         res->record[i].append(buf);
         res->record[i++].append(RECORDSEP);
@@ -333,7 +333,7 @@ table * desc_tb(std::string tb_name) {
     
     setvbuf(fp , NULL , _IOLBF , 0);
     i = 0;
-    while (fgets(buf , 4096 , fp) != NULL) {
+    while (fgets(buf , BUFLEN , fp) != NULL) {
         buf[strlen(buf) - 1] = 0;
         res->record[i].append(buf);
         res->record[i++].append(RECORDSEP);
@@ -349,7 +349,7 @@ table * desc_tb(std::string tb_name) {
     }
     setvbuf(fp , NULL , _IOLBF , 0);
     i = 0;
-    while (fgets(buf , 4096 , fp) != NULL) {
+    while (fgets(buf , BUFLEN , fp) != NULL) {
         buf[strlen(buf) - 1] = 0;
         res->record[i].append(buf);
         res->record[i++].append(RECORDEND);

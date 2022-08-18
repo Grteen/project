@@ -9,8 +9,7 @@
 
 #define DTATBASEL "data"        // the dir of databases
 #define DBMAX   64      // the maxnum of databases.
-#define BUFLEN  4096    // the maxbuflength of buffer
-#define IOLOG   "./log/IO.log"
+#define BUFLEN  1024   // the maxbuflength of buffer
 
 #define IF_NOT_EXIST    1   
 
