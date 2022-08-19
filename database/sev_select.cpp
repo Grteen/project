@@ -8,7 +8,6 @@ extern FILE * logfp;
 extern FILE * io_logfp;
 extern FILE * bptlog;
 extern condition_variable cond;
-extern char * CUR_DIR;
 thread_pool tp;   
 
 void sql_hanlder(task * tk) {
@@ -52,12 +51,7 @@ void sev_select(int listenfd) {
     logfp = fopen(SEVLOG , "w+");         // open the log
     io_logfp = fopen(IOLOG , "w+");        // open the IO log
     bptlog = fopen(BPTLOG , "w+");          // open the bpt log
-    CUR_DIR = new char[PATH_MAX];
     build_all_bpt();
-    if (getcwd(CUR_DIR , PATH_MAX) == NULL){         // get the current dir
-        fprintf(logfp , "getcwd error");
-        exit(-1);
-    }
     setvbuf(stdout , stdoutbuf , _IOLBF , MAXLINE);   
     setvbuf(logfp , NULL , _IOLBF , 0);
     setvbuf(io_logfp , NULL , _IOLBF , 0);

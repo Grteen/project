@@ -1,4 +1,3 @@
 use_db : use db success name : tdb
 use_db : use db success name : ntdb
 use_db : use db success name : tdb
-drop_index : index_field not found name : 3name.idx

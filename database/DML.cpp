@@ -3,6 +3,7 @@
 extern std::unordered_map<string , BPtree *> idxmp;            // index map records the field's index
 extern std::string CUR_DB;         // current database
 extern FILE * io_logfp;
+extern In_Node *p;
 
 int write_index(string tb_name , string field , string key , off_t off , off_t * staloc) {
     char fullpath[PATH_MAX];
@@ -160,11 +161,10 @@ int update_record(string tb_name , record oldrcd , record newrcd , int DML_FLAG)
                     In_Node * temp = it->second->search_Node(it->second->root , stoll(oldrcd.value[i]));
                     idx_off = temp->idxoff;
                     if (!drop_data) {
-                        if (delete_record(tb_name , idx_off) == -1)     // delete the record
+                        if (delete_record(tb_name , temp->off) == -1)     // delete the record
                             return -1;      // error
                         drop_data = true;
                     }
-
                     it->second->remove_Node(stoll(oldrcd.value[i]));        // remove this index in BPtree
                     // delete this index in index file
                     if (delete_index(tb_name , oldrcd.fields[i] , idx_off) == -1)
@@ -187,4 +187,32 @@ int update_record(string tb_name , record oldrcd , record newrcd , int DML_FLAG)
     }
 
     return 0;       // success
+}
+
+record * read_fields(string tb_name) {
+    record * rcd = new record();
+
+    char fullpath[PATH_MAX];
+    strcpy(fullpath , "./" DTATBASEL "/");
+    strcpy(&fullpath[strlen(fullpath)] , (char *)CUR_DB.data());
+    strcpy(&fullpath[strlen(fullpath)] , "/");
+    strcpy(&fullpath[strlen(fullpath)] , (char *)tb_name.data());
+    strcpy(&fullpath[strlen(fullpath)] , "/");
+    strcpy(&fullpath[strlen(fullpath)] , "typenames");
+    FILE * fp;
+    if ((fp = fopen(fullpath , "r+")) == NULL) {
+        delete rcd;
+        fprintf(io_logfp , "read_fields : fopen error\n");
+        return NULL;
+    }
+
+    int fieldi = 0;
+    char buf[BUFLEN];
+    while (fgets(buf , BUFLEN , fp) != NULL) {
+        buf[strlen(buf) - 1] = 0;
+        rcd->fields[fieldi++] = string().assign(buf);
+    }
+    rcd->fieldsnum = fieldi;
+    fclose(fp);
+    return rcd;
 }

@@ -1,7 +1,7 @@
 #include "DDL.h"
 
 extern FILE * io_logfp;
-std::string CUR_DB;         // current database
+std::string CUR_DB = "";         // current database
 char * CUR_DIR;         // current dir
 extern std::unordered_map<string , BPtree *> idxmp;            // index map records the field's index
 
@@ -145,6 +145,8 @@ int use_db(std::string db_name) {
 */
 
 std::string * show_tables(int * size) {
+    if (CUR_DB == "")
+        return NULL;
     DIR             *dp;
     struct dirent   *dirp;
     struct stat     statbuf;

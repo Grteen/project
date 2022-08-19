@@ -2,6 +2,7 @@
 
 extern FILE * logfp;
 extern std::string CUR_DB;         // current database
+extern In_Node *p;
 
 std::condition_variable cond;
 
@@ -120,6 +121,8 @@ void init_returnval() {
     returnval[12] = "sql failed : unknown field type\n";
     returnval[13] = "sql failed : filed has index\n";
     returnval[14] = "sql failed : unknown index\n";
+    returnval[15] = "sql failed : unmatched values\n";
+    returnval[16] = "sql failed : logic error\n";
 }
 
 int threadinfo::analyzer() {
@@ -167,6 +170,18 @@ int threadinfo::analyzer() {
     }
     else if (sqlseg[0] == "alter") {
         return alter_sql(sqlseg , segnum);
+    }
+    else if (sqlseg[0] == "insert") {
+        return insert_sql(sqlseg , segnum);
+    }
+    else if (sqlseg[0] == "update") {
+        return update_sql(sqlseg , segnum);
+    }
+    else if (sqlseg[0] == "delete") {
+        return delete_sql(sqlseg , segnum);
+    }
+    else if (sqlseg[0] == "select") {
+        return select_sql(sqlseg , segnum);
     }
 
     return 4;
@@ -725,6 +740,307 @@ int threadinfo::alter_sql(string * sqlseg , int segnum) {
                 return 0;
             }
         }
+    }
+    return 4;
+}
+
+int threadinfo::insert_sql(string * sqlseg , int segnum) {
+    if (segnum == 10 && sqlseg[1] == "into" && sqlseg[6] == "values") {
+        string tb_name = sqlseg[2];
+        string field[TBTYPEMAX];
+        string value[TBTYPEMAX];
+        record rcd;
+        int fieldi = 0;
+        int valuei = 0;
+        if (sqlseg[3] == "(" && sqlseg[5] == ")" && sqlseg[6] == "values" &&
+            sqlseg[7] == "(" && sqlseg[9] == ")") 
+            {
+            for (int i = 0 ; i < sqlseg[4].size() ; i++) {
+                if (sqlseg[4][i] == ',') 
+                    fieldi++;
+                else {
+                    field[fieldi] = field[fieldi] + sqlseg[4][i];
+                }
+            }
+            for (int i = 0 ; i < sqlseg[8].size() ; i++) {
+                if (sqlseg[8][i] == ',')
+                    valuei++;
+                else {
+                    value[valuei] = value[valuei] + sqlseg[8][i];
+                }
+            }
+        }
+
+        if (fieldi != valuei) 
+            return 15;
+        
+        record * fiercd = read_fields(tb_name);
+        if (fiercd == NULL)
+            return 8;
+        int idxarr[TBTYPEMAX];
+        int idxi = 0;
+
+        for (int i = 0 ; i <= fieldi ; i++) {
+            for (int k = 0 ; k < fiercd->fieldsnum ; k++) {
+                if (field[i] == fiercd->fields[k]) {
+                    idxarr[idxi++] = k;
+                }
+            }
+        }
+
+        for (int i = 0 ; i < fiercd->fieldsnum ; i++) {
+            rcd.fields[i] = "NULL";
+            rcd.value[i] = "NULL";
+        }
+        rcd.fieldsnum = fiercd->fieldsnum;
+        
+        for (int i = 0 ; i <= fieldi ; i++) {
+            rcd.fields[idxarr[i]] = field[i];
+            rcd.value[idxarr[i]] = value[i];
+        }
+
+        int res;
+        res = insert_record(tb_name , rcd);
+        delete fiercd;
+        if (res == -1)
+            return 8;
+        else if (res == 1)
+            return 6;
+        else if (res == 0) {
+            string msg = "insert success\n";
+            if (send(this->_fd , (char *)msg.data() , msg.size() , 0) == -1)
+                fprintf(logfp , "threadinfo::insert_sql : send error\n");
+            return 0;
+        }
+    }
+    return 4;
+}
+
+int threadinfo::update_sql(string * sqlseg , int segnum) {
+    // update tb_name set ... [where ...]
+    if (segnum >= 4 && sqlseg[2] == "set") {
+        string field[TBTYPEMAX];
+        string value[TBTYPEMAX];
+        string condfie[TBTYPEMAX];
+        string condval[TBTYPEMAX];
+        string condcond[TBTYPEMAX];
+        string tb_name = sqlseg[1];
+        bool has_cond = false;
+        int fieldi = 0;
+        int condi = 0;
+        int i = 0;
+        for (i = 3 ; i < segnum ; i++) {
+            if (sqlseg[i] == ",") {
+                fieldi++;
+            }
+            else if (sqlseg[i] == "where") {
+                has_cond = true;
+                break;
+            }
+            else {
+                int curi = 0;
+                for (int k = 0 ; k < sqlseg[i].size() ; k++) {
+                    if (sqlseg[i][k] == '=') {
+                        curi = 1;
+                    }
+                    else {
+                        if (curi == 0) {
+                            field[fieldi] = field[fieldi] + sqlseg[i][k];
+                        }
+                        else if (curi == 1) {
+                            value[fieldi] = value[fieldi] + sqlseg[i][k];
+                        }
+                    }
+                }
+            }
+        }
+        if (has_cond) {
+            int curi = 0;
+            if (i != segnum - 2)
+                return 4;
+            i++;
+            for (int k = 0 ; k < sqlseg[i].size() ; k++) {
+                if (sqlseg[i][k] == '=')
+                    curi = 1;
+                else {
+                    if (curi == 0)
+                        condfie[0] = condfie[0] + sqlseg[i][k];
+                    else if (curi == 1)
+                        condval[0] = condval[0] + sqlseg[i][k];
+                }
+            }
+        }
+        record * fiercd = read_fields(tb_name);
+        record oldrcd;
+        record newrcd;
+        if (fiercd == NULL)
+            return 8;
+        int idxarr[TBTYPEMAX];
+        int idxi = 0;
+
+        for (int i = 0 ; i <= fieldi ; i++) {
+            for (int k = 0 ; k < fiercd->fieldsnum ; k++) {
+                if (field[i] == fiercd->fields[k]) {
+                    idxarr[idxi++] = k;
+                }
+            }
+        }
+
+        for (int i = 0 ; i < fiercd->fieldsnum ; i++) {
+            oldrcd.fields[i] = "NULL";
+            oldrcd.value[i] = "NULL";
+            newrcd.value[i] = "NULL";
+            newrcd.fields[i] = "NULL";
+        }
+        oldrcd.fieldsnum = fiercd->fieldsnum;
+        newrcd.fieldsnum = fiercd->fieldsnum;
+        
+        table * tb = select_record(fiercd->fields , fiercd->fields , fiercd->fieldsnum , tb_name , DQL_EQUAL
+                      , condfie[0] , condval[0] , condval[0]);
+        for (int i = 0 ; i < tb->record_num ; i++) {
+            for (int k = 0 ; k < tb->tb_struct.type_num ; k++) {
+                newrcd.value[k] = tb->prorecord[i][k];
+                oldrcd.value[k] = tb->prorecord[i][k];
+            }
+        }   
+
+        for (int i = 0 ; i <= fieldi ; i++) {
+            oldrcd.fields[idxarr[i]] = field[i];
+            newrcd.fields[idxarr[i]] = field[i];
+            newrcd.value[idxarr[i]] = value[i];
+        }
+
+        int res;
+        for (int i = 0 ; i < tb ->record_num ; i++) {
+            res = update_record(tb_name , oldrcd , newrcd , DML_UPDATE);
+            if (res == -1)
+                return 8;
+        }
+        string msg = "update success\n";
+        if (send(this->_fd , (char *)msg.data() , msg.size() , 0) == -1)
+            fprintf(logfp , "threadinfo::update_sql : send error\n");
+        return 0;
+    }   
+    return 4;
+}
+
+int threadinfo::delete_sql(string * sqlseg , int segnum) {
+    // delete from tb_name [where ...]
+    if (segnum >= 3 && sqlseg[1] == "from") {
+        string condfie[TBTYPEMAX];
+        string condval[TBTYPEMAX];
+        string condcond[TBTYPEMAX];
+        string tb_name = sqlseg[2];
+        bool has_cond = false;
+        int condi = 0;
+        if (sqlseg[3] == "where" && segnum == 5)
+            has_cond = true;
+        if (has_cond) {
+            int curi = 0;
+            for (int k = 0 ; k < sqlseg[4].size() ; k++) {
+                if (sqlseg[4][k] == '=')
+                    curi = 1;
+                else {
+                    if (curi == 0)
+                        condfie[0] = condfie[0] + sqlseg[4][k];
+                    else if (curi == 1)
+                        condval[0] = condval[0] + sqlseg[4][k];
+                }
+            }
+        }
+        record * fiercd = read_fields(tb_name);
+        if (fiercd == NULL)
+            return 8;
+        record oldrcd;
+        oldrcd.fieldsnum = fiercd->fieldsnum;
+        
+        table * tb = select_record(fiercd->fields , fiercd->fields , fiercd->fieldsnum , tb_name , DQL_EQUAL
+                      , condfie[0] , condval[0] , condval[0]);
+        for (int i = 0 ; i < tb->tb_struct.type_num ; i++)
+            oldrcd.fields[i] = tb->tb_struct.tb_tpname[i];
+        for (int i = 0 ; i < tb->record_num ; i++) {
+            for (int k = 0 ; k < tb->tb_struct.type_num ; k++) {
+                oldrcd.value[k] = tb->prorecord[i][k];
+            }
+        }   
+        int res;
+        for (int i = 0 ; i < tb ->record_num ; i++) {
+            res = update_record(tb_name , oldrcd , record() , DML_DROP);
+            if (res == -1)
+                return 8;
+        }
+        string msg = "delete success\n";
+        if (send(this->_fd , (char *)msg.data() , msg.size() , 0) == -1)
+            fprintf(logfp , "threadinfo::delete_sql : send error\n");
+        return 0;
+    }   
+    return 4;
+}
+
+int threadinfo::select_sql(string * sqlseg , int segnum) {
+    // select field , field from tb_name [where ...]
+    if (segnum >= 4) {
+        string field[TBTYPEMAX];
+        string condfie[TBTYPEMAX];
+        string condval[TBTYPEMAX];
+        string condcond[TBTYPEMAX];
+        int fieldi = 0;
+        bool has_cond = false;
+        int i = 0;
+        int condi = 0;
+        record * fiercd = NULL;
+
+        if (sqlseg[1] == "*") {
+            string tb_name = sqlseg[3];
+            if (check_tb_exist(tb_name) != 0)
+                return 6;
+            fiercd = read_fields(tb_name);
+            if (fiercd == NULL)
+                return 8;
+            for (int i = 0 ; i < fiercd->fieldsnum ; i++)
+                field[i] = fiercd->fields[i];
+            fieldi = fiercd->fieldsnum - 1;
+            i = 2;
+        }
+        else {
+            for (i = 1 ; i < segnum ; i++) {
+                if (sqlseg[i] == ",") {
+                    fieldi++;
+                }
+                else if (sqlseg[i] == "from") {
+                    break;
+                }
+                else {
+                    field[fieldi] = sqlseg[i];
+                }
+            }
+        } 
+        string tb_name = sqlseg[i + 1];
+        if (check_tb_exist(tb_name) != 0)
+            return 6;
+        if (sqlseg[i + 2] == "where")
+            has_cond = true;
+        if (has_cond) {
+            i += 3;
+            int curi = 0;
+            for (int k = 0 ; k < sqlseg[i].size() ; k++) {
+                if (sqlseg[i][k] == '=')
+                    curi = 1;
+                else {
+                    if (curi == 0)
+                        condfie[0] = condfie[0] + sqlseg[i][k];
+                    else if (curi == 1)
+                        condval[0] = condval[0] + sqlseg[i][k];
+                }
+            }
+        }
+        
+        table * tb = select_record(field , field , fieldi + 1 , tb_name , DQL_EQUAL
+                      , condfie[0] , condval[0] , condval[0]);
+        string msg = print_table(tb);
+        if (send(this->_fd , (char *)msg.data() , msg.size() , 0) == -1)
+            fprintf(logfp , "threadinfo::select_sql : send error\n");
+        return 0;
     }
     return 4;
 }

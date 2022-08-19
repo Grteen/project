@@ -4,6 +4,8 @@ extern FILE * io_logfp;
 extern std::string CUR_DB;         // current database
 extern std::unordered_map<string , BPtree *> idxmp;            // index map records the field's index
 
+In_Node *p = NULL;
+
 
 record * read_record(string tb_name , off_t off , int * index , int indexnum) {
     if (check_tb_exist(tb_name) != 0)
@@ -125,6 +127,7 @@ table * select_record(string * fields , string * alias , int fieldsnum , string 
                 }
             }
             Node * Ntemp = temp->master;
+            int times = 0;
             // goto BPtree's right to find others which satify the condition
             nodei++;        // the first number that bigger or equal than min
             while (Ntemp != NULL) {
@@ -145,8 +148,6 @@ table * select_record(string * fields , string * alias , int fieldsnum , string 
             finish:
                 ;
         }
-
-        delete temp;
         delete rec;
         return res;       // success
     }

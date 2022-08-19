@@ -2,6 +2,7 @@
 using namespace std;
 
 FILE * bptlog;
+extern In_Node *p;
 
 BPtree::BPtree() {
     this->height = 0;
@@ -41,6 +42,7 @@ In_Node * BPtree::search_Node(Node * node , long long key) {
             if (key == node->key[i]->val) {        // find the target
                 In_Node * res = new In_Node();
                 res = node->key[i];
+                p = node->key[i];
                 return res;         // success
             }
         }
@@ -152,6 +154,7 @@ void BPtree::insert_NULL(long long key , off_t off , off_t idxoff) {
     In_Node * innode = new In_Node();
     innode->val = key;
     innode->off = off;
+    innode->idxoff = idxoff;
     innode->master = node;
     node->key[0] = innode;
     node->keynum++;

@@ -32,3 +32,6 @@ int insert_record(string tb_name , record rcd);
 
 // update or drop record        -1 error 0 success 1 not find
 int update_record(string tb_name , record oldrcd , record newrcd , int DML_FLAG);
+
+// read fields
+record * read_fields(string tb_name);

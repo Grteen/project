@@ -50,6 +50,10 @@ public:
     int drop_sql(string * sqlseg , int segnum);
     int desc_sql(string * sqlseg , int segnum);
     int alter_sql(string * sqlseg , int segnum);
+    int insert_sql(string * sqlseg , int segnum);
+    int update_sql(string * sqlseg , int segnum);
+    int delete_sql(string * sqlseg , int segnum);
+    int select_sql(string * sqlseg , int segnum);
 };
 
 class task {
