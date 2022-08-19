@@ -71,8 +71,6 @@ int delete_db(std::string db_name , int DDB_flags) {
     int size = 0;
     std::string * all_db_name = show_databases(&size);       // get all the db name
     if (all_db_name == NULL) {
-        fclose(fp);
-        delete []all_db_name;
         return -1;          // error
     }
     for (int i = 0 ; i < size ; i++){
@@ -83,7 +81,6 @@ int delete_db(std::string db_name , int DDB_flags) {
             strcpy(&cmdstr[strlen(cmdstr)] , (char *)db_name.data());
             if ((fp = popen(cmdstr , "r")) == NULL) {
                 fprintf(io_logfp , "delete db : popen error\n");
-                fclose(fp);
                 delete []all_db_name;
                 return -1;      // error
             }
@@ -94,10 +91,10 @@ int delete_db(std::string db_name , int DDB_flags) {
     }
     // not find target db
     if (DDB_flags & IF_EXIST) {
-        return 0;       // success
-        fclose(fp);
         fprintf(io_logfp , "delete db : not find target db\n");
         delete []all_db_name;
+        fclose(fp);
+        return 0;       // success
     }
     fclose(fp);
     fprintf(io_logfp , "delete db : not find target db\n");
@@ -105,11 +102,28 @@ int delete_db(std::string db_name , int DDB_flags) {
     return 1;       // not found
 }
 
+int check_db_exist(std::string db_name) {
+    int size = 0;
+    std::string * all_db_name = show_databases(&size);       // get all the db name
+    if (all_db_name == NULL) {
+        fprintf(io_logfp , "use_db : show_databases error");
+        return -1;      // error
+    }
+    for (int i = 0 ; i < size ; i++){
+        if (all_db_name[i] == db_name){     // find the target db
+            delete []all_db_name;
+            return 0;           // success
+        }
+    }
+
+    delete []all_db_name;
+    return 1;       // not find
+}
+
 int use_db(std::string db_name) {
     int size = 0;
     std::string * all_db_name = show_databases(&size);       // get all the db name
     if (all_db_name == NULL) {
-        delete []all_db_name;
         fprintf(io_logfp , "use_db : show_databases error");
         return -1;      // error
     }
@@ -289,9 +303,7 @@ table * desc_tb(std::string tb_name) {
     
     res->tb_struct.tb_tpname[0] = "Field";
     res->tb_struct.tb_tpname[1] = "Type";
-    res->tb_struct.tb_tpname[2] = "NULL";       // allow_NULL
-    res->tb_struct.tb_tpname[3] = "Key";
-    res->tb_struct.tb_tpname[4] = "Extra";
+    res->tb_struct.tb_tpname[2] = "attribute";
 
     char fullpath[PATH_MAX];
     strcpy(fullpath , "./" DTATBASEL);
@@ -354,8 +366,9 @@ table * desc_tb(std::string tb_name) {
         res->record[i].append(buf);
         res->record[i++].append(RECORDEND);
     }
-    res->tb_struct.type_num = 5;
+    res->tb_struct.type_num = 3;
     res->record_num = i;
+    res->process_record();
     fclose(fp);
     return res;
 }
@@ -593,6 +606,8 @@ int add_field(std::string tb_name , std::string newfield , std::string type , st
 {
     if (check_tb_exist(tb_name) != 0)
         return 1;
+    if (check_filed_type(type) != 0)
+        return 3;
     table *tb = new table();
     if ((tb = read_tables(tb_name)) == NULL) {
         fprintf(io_logfp , "add_field : read_tables error name : %s" , (char *)tb_name.data());
@@ -604,7 +619,7 @@ int add_field(std::string tb_name , std::string newfield , std::string type , st
         if (tb->tb_struct.tb_tpname[i] == newfield) {    // find the same one
             fprintf(io_logfp , "add_field : find the same name of types name : %s" , (char *)newfield.data());
             delete tb;
-            return 1;       // failed
+            return 2;       // failed
         }
     
     // change the information of table
@@ -618,7 +633,7 @@ int add_field(std::string tb_name , std::string newfield , std::string type , st
     // process the record into easy mode
     tb->process_record();
     // check data if satify new type
-    tb->check_data_validity();
+    // tb->check_data_validity();
     // change the record
     tb->write_record();
 
@@ -634,12 +649,14 @@ int add_field(std::string tb_name , std::string newfield , std::string type , st
 
 int modify_field(std::string tb_name , std::string oldfield , std::string type) {
     // this oldfield have index
-    if (idxmp.find(chg_idx(tb_name , oldfield)) == idxmp.end()) {
+    if (idxmp.find(chg_idx(tb_name , oldfield)) != idxmp.end()) {
         fprintf(io_logfp , "modify_field : oldfield has index name : %s" , (char *)oldfield.data());
         return 2;       // have index;
     }
     if (check_tb_exist(tb_name) != 0)
         return 1;
+    if (check_filed_type(type) != 0)
+        return 3;
     table *tb = new table();
     bool find_flag = false;
     if ((tb = read_tables(tb_name)) == NULL) {
@@ -665,7 +682,7 @@ int modify_field(std::string tb_name , std::string oldfield , std::string type) 
     // process the record into easy mode
     tb->process_record();
     // check data if satify new type
-    tb->check_data_validity();
+    // tb->check_data_validity();
     // change the record
     tb->write_record();
 
@@ -682,10 +699,13 @@ int modify_field(std::string tb_name , std::string oldfield , std::string type) 
 int change_field(std::string tb_name , std::string oldfield , std::string newfield , std::string type ,
                  std::string comment , std::string attr) 
 {
-    if (idxmp.find(chg_idx(tb_name , oldfield)) == idxmp.end()) {
+    if (idxmp.find(chg_idx(tb_name , oldfield)) != idxmp.end()) {
         fprintf(io_logfp , "change_field : oldfield has index name : %s" , (char *)oldfield.data());
         return 2;       // have index;
     }
+
+    if (check_filed_type(type) != 0)
+        return 3;
 
     if (check_tb_exist(tb_name) != 0)
         return 1;
@@ -697,6 +717,15 @@ int change_field(std::string tb_name , std::string oldfield , std::string newfie
         return -1;      // error
     }
     // find oldfield
+
+    // check newfield 
+    for (int i = 0 ; i < tb->tb_struct.type_num ; i++) {
+        if (tb->tb_struct.tb_tpname[i] == newfield) {
+            fprintf(io_logfp , "change field : find the same name of types name : %s" , (char *)newfield.data());
+            delete tb;
+            return 4;       // same fields
+        }
+    }
     for (int i = 0 ; i < tb->tb_struct.type_num ; i++) {
         if (tb->tb_struct.tb_tpname[i] == oldfield) {
             find_flag = true;
@@ -718,7 +747,7 @@ int change_field(std::string tb_name , std::string oldfield , std::string newfie
     // process the record into easy mode
     tb->process_record();
     // check data if satify new type
-    tb->check_data_validity();
+    // tb->check_data_validity();
     // change the record
     tb->write_record();
 
@@ -736,7 +765,7 @@ int change_field(std::string tb_name , std::string oldfield , std::string newfie
 int drop_field(std::string tb_name , std::string oldfield) {
     if (check_tb_exist(tb_name) != 0)
         return 1;
-    if (idxmp.find(chg_idx(tb_name , oldfield)) == idxmp.end()) {
+    if (idxmp.find(chg_idx(tb_name , oldfield)) != idxmp.end()) {
         fprintf(io_logfp , "drop_field : oldfield has index name : %s" , (char *)oldfield.data());
         return 2;       // have index;
     }
@@ -780,7 +809,7 @@ int drop_field(std::string tb_name , std::string oldfield) {
     // process the record into easy mode
     tb->process_record();
     // check data if satify new type
-    tb->check_data_validity();
+    // tb->check_data_validity();
     // change the record
     tb->write_record();
 
@@ -849,13 +878,18 @@ int drop_table(std::string tb_name , int DTB_flags) {
     }
     // not find target db
     if (DTB_flags & IF_EXIST) {
-        return 0;       // success
-        fclose(fp);
         fprintf(io_logfp , "delete db : not find target db\n");
         delete []tb;
+        return 0;       // success
     }
-    fclose(fp);
     fprintf(io_logfp , "delete db : not find target db\n");
     delete []tb;
     return 1;       // not found
+}
+
+int check_filed_type(std::string field) {
+    if (field == "INT" || field == "FLOAT" || field == "DOUBLE" ||
+        field == "YEAR" || field == "TIME" || field == "DATE")
+        return 0;       // success
+    return 1;      // failed
 }

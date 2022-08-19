@@ -31,6 +31,9 @@ int create_db(std::string db_name , int CDB_flags);
 // delete a database   return -1 means error 1 means db not exists (no IF_EXIST) 0 means success
 int delete_db(std::string db_name , int DDB_flags);
 
+// check database exists
+int check_db_exist(std::string db_name);
+
 // change the current database    return -1 means error 1 means db not exists 0 means success
 int use_db(std::string db_name);
 
@@ -58,14 +61,14 @@ table * read_tables(std::string tb_name);
 // write all table's information to files
 int write_tables(table * tb);
 
-// add new field   -1 means error 0 means success 1 means same typename
+// add new field   -1 means error 0 means success 1 means not find tb_name 2 means same fields 3 means unknown fields
 int add_field(std::string tb_name , std::string newfield , std::string type , std::string comment ,
               std::string attr);
 
-// modify field    -1 means error 0 means success 1 means not find target 2 means have index
+// modify field    -1 means error 0 means success 1 means not find target 2 means have index 3 means unknown fields
 int modify_field(std::string tb_name , std::string oldfield , std::string type);
 
-// change field    -1 means error 0 means success 1 means not find target 2 means have index
+// change field    -1 means error 0 means success 1 means not find target 2 means have index 3 means unknown fields 4 means same fields
 int change_field(std::string tb_name , std::string oldfield , std::string newfield , std::string type ,
                  std::string comment , std::string attr);
 
@@ -77,3 +80,6 @@ int rename_table(std::string old_tb_name , std::string new_tb_name);
 
 // drop table
 int drop_table(std::string tb_name , int DTB_flags);
+
+// check filed type
+int check_filed_type(std::string field);

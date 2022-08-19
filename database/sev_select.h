@@ -14,3 +14,5 @@ using namespace std;
 #define IOLOG   "./log/IO.log"
 
 void sev_select(int );
+
+void build_all_bpt();

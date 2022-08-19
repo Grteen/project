@@ -1,3 +1,4 @@
+#pragma once
 #include "common.h"
 #include "index.h"
 #include "DDL.h"

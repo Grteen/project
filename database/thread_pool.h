@@ -1,3 +1,4 @@
+#pragma once
 #include "common.h"
 #include <thread>
 #include <mutex>
@@ -7,9 +8,20 @@
 #include <string>
 #include <iostream>
 
+#include "DDL.h"
+#include "DML.h"
+#include "DQL.h"
+
 #define thread_max 8        // the maxnum of thread in thread_pool
 #define thread_arg 2        // the number of arguments in threadinfo
 
+#define SQLMAX      1024        // the max capcity of a sql 
+#define SQLENDFLAG     ';'         // the end flag of a sql
+#define SQLSEP      ' '         // the sepator of sql
+
+using namespace std;
+
+static string returnval[1024];          // return val of threadinfo::analyzer
 
 class threadinfo {          // thread and its infomation
 private:
@@ -31,6 +43,13 @@ public:
     int change_free(bool);          // change the free condition
     int get_fd();               // get the client's fd
     int change_fd(int );            // change the client's fd
+    int analyzer();       // analyze the sql and call deal function
+    int show_sql(string * sqlseg , int segnum);
+    int use_sql(string * sqlseg , int segnum);
+    int create_sql(string * sqlseg , int segnum);
+    int drop_sql(string * sqlseg , int segnum);
+    int desc_sql(string * sqlseg , int segnum);
+    int alter_sql(string * sqlseg , int segnum);
 };
 
 class task {
@@ -57,3 +76,7 @@ public:
 };
 
 void Prosql(threadinfo *);         // the function that thread called
+
+void init_returnval();      // init the return_val
+
+string print_table(table * tb);     // change the table to string which is easy to print

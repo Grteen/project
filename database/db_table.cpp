@@ -25,25 +25,34 @@ void table::check_data_validity() {
         for (int j = 0 ; j < this->tb_struct.type_num ; j++) {
             if (tb_struct.tb_type[j] == "INT") {
                 INT temp;
-                temp.val = std::stol(this->prorecord[i][j]);
+                if (prorecord[i][j] == "NULL")
+                    temp.val = 0;
+                else 
+                    temp.val = std::stol(this->prorecord[i][j]);
                 if (temp.INT_CHECK() == 1)      // invalid
                     this->prorecord[i][j] = "NULL"; 
             }
             if (tb_struct.tb_type[j] == "FLOAT") {
                 FLOAT temp;
-                temp.val = std::stof(this->prorecord[i][j]);
+                if (prorecord[i][j] == "NULL")
+                    temp.val = 0;
+                else 
+                    temp.val = std::stof(this->prorecord[i][j]);
                 if (temp.FLOAT_CHECK() == 1)      // invalid
                     this->prorecord[i][j] = "NULL"; 
             }
             if (tb_struct.tb_type[j] == "DOUBLE") {
                 DOUBLE temp;
-                temp.val = std::stod(this->prorecord[i][j]);
+                if (prorecord[i][j] == "NULL")
+                    temp.val = 0;
+                else 
+                    temp.val = std::stod(this->prorecord[i][j]);
                 if (temp.DOUBLE_CHECK() == 1)      // invalid
                     this->prorecord[i][j] = "NULL"; 
             }
             if (tb_struct.tb_type[j] == "CHAR") {
                 CHAR temp;
-                temp.val = this->prorecord[i][j];
+                    temp.val = this->prorecord[i][j];
                 if (temp.CHAR_CHECK() == 1)      // invalid
                     this->prorecord[i][j] = "NULL"; 
             }
@@ -55,7 +64,10 @@ void table::check_data_validity() {
             }     
             if (tb_struct.tb_type[j] == "YEAR") {
                 YEAR temp;
-                temp.val = std::stol(this->prorecord[i][j]);
+                if (prorecord[i][j] == "NULL")
+                    temp.val = 0;
+                else 
+                    temp.val = std::stol(this->prorecord[i][j]);
                 if (temp.YEAR_CHECK() == 1)      // invalid
                     this->prorecord[i][j] = "NULL"; 
             }
@@ -63,6 +75,11 @@ void table::check_data_validity() {
                 TIME temp;
                 std::string str;
                 int times = 0;
+                if (prorecord[i][j] == "NULL") {
+                    temp.hour = 0;
+                    temp.minute = 0;
+                    temp.second = 0;
+                }
                 for (int k = 0 ; k < this->prorecord[i][j].size(); k++) {
                     if (prorecord[i][j][k] != ':') {
                         str = str + prorecord[i][j][k];
@@ -85,6 +102,11 @@ void table::check_data_validity() {
                 DATE temp;
                 std::string str;
                 int times = 0;
+                if (prorecord[i][j] == "NULL") {
+                    temp.year = 0;
+                    temp.month = 0;
+                    temp.day = 0;
+                }
                 for (int k = 0 ; k < this->prorecord[i][j].size(); k++) {
                     if (prorecord[i][j][k] != '-') {
                         str = str + prorecord[i][j][k];
