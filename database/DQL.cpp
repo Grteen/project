@@ -106,6 +106,12 @@ table * select_record(string * fields , string * alias , int fieldsnum , string 
         k++;
     }
 
+    // no condition
+    if (max == "NULL" && min == "NULL" && sel_field == "NULL") {
+        table * res = read_tables(tb_name);
+        return res;
+    }
+
     auto it = idxmp.find(chg_idx(tb_name , sel_field));
     if (it != idxmp.end()) {        // this field has the index
         In_Node * temp;

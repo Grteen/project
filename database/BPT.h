@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include <iostream>
+#include <mutex>
 
 using namespace std;
 #define BPTORDER    5       //the order of B+ TEMP_FAILURE_RETRY
@@ -61,6 +62,7 @@ class BPtree {
 public:
     Node * root;        // root Node
     int height;         // this tree's height
+    std::mutex mu;       // the mutex that protect the tree
 
     BPtree();
     ~BPtree();

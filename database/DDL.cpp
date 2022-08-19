@@ -207,11 +207,12 @@ int create_tb(std::string tb_name , table_structure tb_struct) {
         delete []all_tb_name;
         return -1;      // error
     }
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     setvbuf(fp , NULL , _IOLBF , 0);
     for (int i = 0 ; i < tb_struct.type_num ; i++) {
         fprintf(fp , "%s%c" , (char *)tb_struct.tb_type[i].data() , TYPESEP);
     }
-
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
     memset(fullpath , 0 , sizeof(fullpath));
     strcpy(fullpath , temppath);
     
@@ -219,14 +220,16 @@ int create_tb(std::string tb_name , table_structure tb_struct) {
     if ((fp = fopen(fullpath , "w+")) == NULL) {
         fprintf(io_logfp , "create_db : fopen error\n");
         fclose(fp);
+        un_lock(fileno(fp) , 0 , SEEK_SET , 0);
         delete []all_tb_name;
         return -1;      // error
     }
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     setvbuf(fp , NULL , _IOLBF , 0);
     for (int i = 0 ; i < tb_struct.type_num ; i++) {
         fprintf(fp , "%s%c" , (char *)tb_struct.tb_tpname[i].data() , TYPESEP);
     }
-
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
     memset(fullpath , 0 , sizeof(fullpath));
     strcpy(fullpath , temppath);
 
@@ -237,11 +240,12 @@ int create_tb(std::string tb_name , table_structure tb_struct) {
         delete []all_tb_name;
         return -1;      // error
     }
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     setvbuf(fp , NULL , _IOLBF , 0);
     for (int i = 0 ; i < tb_struct.type_num ; i++) {
         fprintf(fp , "%s%c" , (char *)tb_struct.tb_tpcomment[i].data() , TYPESEP);
     }
-
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
     memset(fullpath , 0 , sizeof(fullpath));
     strcpy(fullpath , temppath);
 
@@ -252,9 +256,10 @@ int create_tb(std::string tb_name , table_structure tb_struct) {
         delete []all_tb_name;
         return -1;      // error
     }
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     setvbuf(fp , NULL , _IOLBF , 0);
     fprintf(fp , "%s%c" , (char *)tb_struct.tb_comment.data() , TYPESEP);
-
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
     memset(fullpath , 0 , sizeof(fullpath));
     strcpy(fullpath , temppath);
 
@@ -265,10 +270,12 @@ int create_tb(std::string tb_name , table_structure tb_struct) {
         delete []all_tb_name;
         return -1;      // error
     }
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     setvbuf(fp , NULL , _IOLBF , 0);
     for (int i = 0 ; i < tb_struct.type_num ; i++) {
         fprintf(fp , "%s%c" , (char *)tb_struct.tb_tpattr[i].data() , TYPESEP);
     }
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
 
     memset(fullpath , 0 , sizeof(fullpath));
     strcpy(fullpath , temppath);
@@ -519,7 +526,6 @@ int write_tables(table * tb) {
     strcpy(&fullpath[strlen(fullpath)] , "typenames");
     FILE * fp;
     char buf[BUFLEN];
-
     if ((fp = fopen(fullpath , "w+")) == NULL) {
         fprintf(io_logfp , "write_tables : fopen error\n");
         fclose(fp);
@@ -527,10 +533,11 @@ int write_tables(table * tb) {
     }
     i = 0;
     setvbuf(fp , NULL , _IOLBF , 0);
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     for (int i = 0 ; i < tb->tb_struct.type_num ; i++) {
         fprintf(fp , "%s\n" , (char *)tb->tb_struct.tb_tpname[i].data());
     }
-
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
     strcpy(fullpath, temppath);
     strcpy(&fullpath[strlen(fullpath)] , "types");
 
@@ -541,9 +548,10 @@ int write_tables(table * tb) {
     }
     i = 0;
     setvbuf(fp , NULL , _IOLBF , 0);
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     for (int i = 0 ; i < tb->tb_struct.type_num ; i++)
         fprintf(fp , "%s\n" ,(char *)tb->tb_struct.tb_type[i].data());
-    
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
     strcpy(fullpath, temppath);
     strcpy(&fullpath[strlen(fullpath)] , "typeattrs");
 
@@ -554,9 +562,10 @@ int write_tables(table * tb) {
     }
     i = 0;
     setvbuf(fp , NULL , _IOLBF , 0);
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     for (int i = 0 ; i < tb->tb_struct.type_num ; i++)
         fprintf(fp , "%s\n" , (char *)tb->tb_struct.tb_tpattr[i].data());
-
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
     strcpy(fullpath, temppath);
     strcpy(&fullpath[strlen(fullpath)] , "typecomments");
 
@@ -567,9 +576,10 @@ int write_tables(table * tb) {
     }
     i = 0;
     setvbuf(fp , NULL , _IOLBF , 0);
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     for (int i = 0 ; i < tb->tb_struct.type_num ; i++)
         fprintf(fp , "%s\n" , (char *)tb->tb_struct.tb_tpcomment[i].data());
-
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
     strcpy(fullpath, temppath);
     strcpy(&fullpath[strlen(fullpath)] , "tablecomment");
 
@@ -580,8 +590,9 @@ int write_tables(table * tb) {
     }
     i = 0;
     setvbuf(fp , NULL , _IOLBF , 0);
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     fprintf(fp , "%s\n" , (char *)tb->tb_struct.tb_comment.data());
-
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
     strcpy(fullpath, temppath);
     strcpy(&fullpath[strlen(fullpath)] , "records");
 
@@ -592,12 +603,14 @@ int write_tables(table * tb) {
     }
     i = 0;
     setvbuf(fp , NULL , _IOLBF , 0);
+    write_lock(fileno(fp) , 0 , SEEK_SET , 0);
     for (int i = 0 ; i < tb->record_num ; i++) {
         int length = 0;
         length = strlen((char *)tb->record[i].data());
         // valid_bit record_length record newline
         fprintf(fp , "%c%s%s\n" , '0' , RECORDSEP , (char *)tb->record[i].data());
     }
+    un_lock(fileno(fp) , 0 , SEEK_SET , 0);
 
     fclose(fp);
     return 0;       // success
@@ -661,6 +674,7 @@ int modify_field(std::string tb_name , std::string oldfield , std::string type) 
         return 3;
     table *tb = new table();
     bool find_flag = false;
+    int typei = 0;
     if ((tb = read_tables(tb_name)) == NULL) {
         fprintf(io_logfp , "modify_field : read_tables error name : %s" , (char *)tb_name.data());
         delete tb;
@@ -670,6 +684,7 @@ int modify_field(std::string tb_name , std::string oldfield , std::string type) 
     for (int i = 0 ; i < tb->tb_struct.type_num ; i++) {
         if (tb->tb_struct.tb_tpname[i] == oldfield) {       // find the target field
             tb->tb_struct.tb_type[i] = type;        // change the type
+            typei = i;
             find_flag = true;
             break;
         }
@@ -683,8 +698,9 @@ int modify_field(std::string tb_name , std::string oldfield , std::string type) 
 
     // process the record into easy mode
     tb->process_record();
-    // check data if satify new type
-    // tb->check_data_validity();
+    // put modified type's records to NULL 
+    for (int i = 0 ; i < tb->record_num ; i++) 
+        tb->prorecord[i][typei] = "NULL";
     // change the record
     tb->write_record();
 
@@ -713,6 +729,7 @@ int change_field(std::string tb_name , std::string oldfield , std::string newfie
         return 1;
     table *tb = new table();
     bool find_flag = false;
+    int typei = 0;
     if ((tb = read_tables(tb_name)) == NULL) {
         fprintf(io_logfp , "change_field : read_tables error name : %s" , (char *)tb_name.data());
         delete tb;
@@ -731,6 +748,7 @@ int change_field(std::string tb_name , std::string oldfield , std::string newfie
     for (int i = 0 ; i < tb->tb_struct.type_num ; i++) {
         if (tb->tb_struct.tb_tpname[i] == oldfield) {
             find_flag = true;
+            typei = i;
             // change information
             tb->tb_struct.tb_tpname[i] = newfield;
             tb->tb_struct.tb_type[i] = type;
@@ -748,8 +766,9 @@ int change_field(std::string tb_name , std::string oldfield , std::string newfie
 
     // process the record into easy mode
     tb->process_record();
-    // check data if satify new type
-    // tb->check_data_validity();
+    // put modified type's records to NULL
+    for (int i = 0 ; i < tb->record_num ; i++)
+        tb->prorecord[i][typei] = "NULL";
     // change the record
     tb->write_record();
 
@@ -893,5 +912,12 @@ int check_filed_type(std::string field) {
     if (field == "INT" || field == "FLOAT" || field == "DOUBLE" ||
         field == "YEAR" || field == "TIME" || field == "DATE")
         return 0;       // success
+    else if (field[0] == 'C' && field[1] == 'H' && field[2] == 'A' && field[3] == 'R'
+             && field[4] == '[' && field[field.size() - 1] == ']' && field.size() - 1 != 5)
+            return 0;
+    else if (field[0] == 'V' && field[1] == 'A' && field[2] == 'R' && field[3] == 'C'
+            && field[4] == 'H' && field[5] == 'A' && field[6] == 'R' && field[7] == '['
+            && field[field.size() - 1] == ']' && field.size() - 1 != 8)
+            return 0;        
     return 1;      // failed
 }

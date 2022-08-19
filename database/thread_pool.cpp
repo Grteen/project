@@ -356,27 +356,13 @@ int threadinfo::create_sql(string * sqlseg , int segnum) {
                     }
                     else if (fieldloc == 1) {
                         string type = sqlseg[i];
-                        if (type == "INT" || type == "DOUBLE" || type == "FLOAT" || type == "YEAR"
-                            || type == "TIME" || type == "TIME" || type == "DATE")
+                        if (check_filed_type(type) == 0)
                         {
                             tb_stu.tb_type[fieldi] = type;
+                            fieldloc++;
                         }
-                        else {
-                            if (type[0] == 'C' && type[1] == 'H' && type[2] == 'A' || type[3] == 'R'
-                                && type[4] == '(' && type[type.size() - 1] == ')') 
-                            {
-                                tb_stu.tb_type[fieldi] = type;
-                            }
-                            else if (type[0] == 'V' && type[1] == 'A' && type[2] == 'R' && type[3] == 'C'
-                                     && type[4] == 'C' && type[5] == 'H' && type[6] == 'A' && type[7] == 'R'
-                                     && type[8] == '(' && type[type.size() - 1] == ')')
-                            {
-                                tb_stu.tb_type[fieldi] = type;
-                            }
-
+                        else 
                             return 4;
-                        }
-                        fieldloc++;
                     }
                     else if (fieldloc == 2) {
                         if (sqlseg[i] != "comment")
@@ -745,6 +731,7 @@ int threadinfo::alter_sql(string * sqlseg , int segnum) {
 }
 
 int threadinfo::insert_sql(string * sqlseg , int segnum) {
+    // insert into tb_name ( field1,field2 ) values ( value1,value2 )
     if (segnum == 10 && sqlseg[1] == "into" && sqlseg[6] == "values") {
         string tb_name = sqlseg[2];
         string field[TBTYPEMAX];
@@ -1016,6 +1003,7 @@ int threadinfo::select_sql(string * sqlseg , int segnum) {
             }
         } 
         string tb_name = sqlseg[i + 1];
+        table *tb = NULL;
         if (check_tb_exist(tb_name) != 0)
             return 6;
         if (sqlseg[i + 2] == "where")
@@ -1033,10 +1021,14 @@ int threadinfo::select_sql(string * sqlseg , int segnum) {
                         condval[0] = condval[0] + sqlseg[i][k];
                 }
             }
+            tb = select_record(field , field , fieldi + 1 , tb_name , DQL_EQUAL
+              , condfie[0] , condval[0] , condval[0]);
+        }
+        else {
+            tb = select_record(field , field , fieldi + 1 , tb_name , DQL_EQUAL , 
+                 "NULL" , "NULL" , "NULL");
         }
         
-        table * tb = select_record(field , field , fieldi + 1 , tb_name , DQL_EQUAL
-                      , condfie[0] , condval[0] , condval[0]);
         string msg = print_table(tb);
         if (send(this->_fd , (char *)msg.data() , msg.size() , 0) == -1)
             fprintf(logfp , "threadinfo::select_sql : send error\n");

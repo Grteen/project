@@ -1,3 +1,5 @@
 use_db : use db success name : tdb
 use_db : use db success name : ntdb
 use_db : use db success name : tdb
+insert a new record to table tb
+insert a new record to table tb

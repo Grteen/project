@@ -113,6 +113,7 @@ In_Node * BPtree::search_Sim(Node * node , long long key) {
 }      
 
 void BPtree::insert_Node(long long key , off_t off , off_t idxoff) {
+    std::unique_lock<std::mutex> locker(this->mu);
     if (this->height == 0) {     // none node
         this->insert_NULL(key , off , idxoff);
         return;
@@ -271,6 +272,7 @@ void Node::insert_Index(long long key , off_t off , Node *left , Node *right) {
 
 int BPtree::remove_Node(long long key) {
     // find the target
+    std::unique_lock<std::mutex> locker(this->mu);
     In_Node * target = this->search_Node(this->root , key);
     if (target == NULL) {
         fprintf(bptlog , "remove_Node : search_Node not find key : %lld" , key);
@@ -567,6 +569,7 @@ void Node::index_merge() {
 }
 
 void BPtree::destory_tree() {
+    std::unique_lock<std::mutex> locker(this->mu);
     this->root->destroy_node();
 }
 
